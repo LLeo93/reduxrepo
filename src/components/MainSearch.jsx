@@ -1,44 +1,37 @@
+// src/components/MainSearch.jsx
+
 import { useState } from 'react';
-import { Container, Row, Col, Form } from 'react-bootstrap';
+import { Container, Row, Col, Form, Spinner, Alert } from 'react-bootstrap';
 import Job from './Job';
-import 'bootstrap-icons/font/bootstrap-icons.css';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchJobs } from '../actions/favoriteActions';
 
 const MainSearch = () => {
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
-  const [jobs, setJobs] = useState([]);
+  const dispatch = useDispatch();
 
-  const baseEndpoint =
-    'https://strive-benchmark.herokuapp.com/api/jobs?search=';
+  // Ottieni i risultati, loading e error dallo store Redux
+  const { results, isLoading, error } = useSelector((state) => state.search);
 
   const handleChange = (e) => {
     setQuery(e.target.value);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-
-    try {
-      const response = await fetch(baseEndpoint + query + '&limit=20');
-      if (response.ok) {
-        const { data } = await response.json();
-        setJobs(data);
-      } else {
-        alert('Error fetching results');
-      }
-    } catch (error) {
-      console.log(error);
+    if (query.trim() !== '') {
+      dispatch(fetchJobs(query)); // Dispatch per cercare i lavori
     }
   };
 
   return (
     <Container>
       <Row className="justify-content-end">
-        {' '}
         <Col className="col-12">
           <i
-            className="	bi bi-star-fill"
+            className="bi bi-star-fill"
             style={{ fontSize: '100px', cursor: 'pointer' }}
             onClick={() => navigate('/prefer')}
           ></i>
@@ -58,8 +51,25 @@ const MainSearch = () => {
             />
           </Form>
         </Col>
+
+        {/* Indicatore di caricamento */}
+        {isLoading && (
+          <Col xs={10} className="mx-auto mb-5">
+            <Spinner animation="border" variant="primary" />{' '}
+            {/* Indica caricamento */}
+          </Col>
+        )}
+
+        {/* Mostra l'errore */}
+        {error && (
+          <Col xs={10} className="mx-auto mb-5">
+            <Alert variant="danger">{error}</Alert> {/* Mostra l'errore */}
+          </Col>
+        )}
+
         <Col xs={10} className="mx-auto mb-5">
-          {jobs.map((jobData) => (
+          {/* Mappa i risultati della ricerca */}
+          {results.map((jobData) => (
             <Job key={jobData._id} data={jobData} />
           ))}
         </Col>
